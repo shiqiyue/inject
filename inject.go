@@ -75,6 +75,28 @@ func (o *Object) String() string {
 	return buf.String()
 }
 
+func (o *Object) before() {
+	s, ok := o.Value.(InjectBefore)
+	if ok {
+		s.Before()
+	}
+}
+
+func (o *Object) after() {
+	s, ok := o.Value.(InjectAfter)
+	if ok {
+		s.After()
+	}
+}
+
+func (o *Object) setup() {
+	s, ok := o.Value.(InjectSetup)
+	if ok {
+		s.SetUp()
+	}
+
+}
+
 func (o *Object) addDep(field string, dep *Object) {
 	if o.Fields == nil {
 		o.Fields = make(map[string]*Object)
@@ -93,6 +115,11 @@ type Graph struct {
 // Provide objects to the Graph. The Object documentation describes
 // the impact of various fields.
 func (g *Graph) Provide(objects ...*Object) error {
+	// 提供前执行
+	for _, object := range objects {
+
+		object.before()
+	}
 	for _, o := range objects {
 		o.reflectType = reflect.TypeOf(o.Value)
 		o.reflectValue = reflect.ValueOf(o.Value)
@@ -408,6 +435,8 @@ StructLoop:
 		}
 		o.addDep(fieldName, newObject)
 	}
+	o.after()
+	o.setup()
 	return nil
 }
 
@@ -505,6 +534,8 @@ func (g *Graph) populateUnnamedInterface(o *Object) error {
 			)
 		}
 	}
+	o.after()
+	o.setup()
 	return nil
 }
 
