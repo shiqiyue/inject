@@ -63,6 +63,9 @@ type Object struct {
 	private      bool // If true, the Value will not be used and will only be populated
 	created      bool // If true, the Object was created by us
 	embedded     bool // If true, the Object is an embedded struct provided internally
+	beforeExec   bool // before函数是否执行
+	afterExec    bool // after函数是否执行
+	setupExec    bool //setup函数是否执行
 }
 
 // String representation suitable for human consumption.
@@ -76,6 +79,10 @@ func (o *Object) String() string {
 }
 
 func (o *Object) before() {
+	if o.beforeExec {
+		return
+	}
+	o.beforeExec = true
 	s, ok := o.Value.(InjectBefore)
 	if ok {
 		s.Before()
@@ -83,6 +90,10 @@ func (o *Object) before() {
 }
 
 func (o *Object) after() {
+	if o.afterExec {
+		return
+	}
+	o.afterExec = true
 	s, ok := o.Value.(InjectAfter)
 	if ok {
 		s.After()
@@ -90,6 +101,10 @@ func (o *Object) after() {
 }
 
 func (o *Object) setup() {
+	if o.setupExec {
+		return
+	}
+	o.setupExec = true
 	s, ok := o.Value.(InjectSetup)
 	if ok {
 		s.SetUp()
